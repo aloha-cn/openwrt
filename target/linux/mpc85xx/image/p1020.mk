@@ -91,6 +91,46 @@ define Device/extreme-networks_ws-ap3825i
 endef
 TARGET_DEVICES += extreme-networks_ws-ap3825i
 
+# OpenWrt is deployed on a microSD card. The stock u-boot bootcmd loads the
+# kernel and the device tree from the FAT partition 1 with fatload and boots
+# them, so only two one-time environment settings are needed:
+#
+#   setenv fdt_high 0xffffffff
+#   setenv bootargs 'root=/dev/mmcblk0p2 rootwait rw console=ttyS0,115200'
+#   saveenv
+#
+# (fdt_high keeps u-boot from relocating the device tree into the area the
+# kernel is decompressed to, the bootargs replace the factory ones which
+# expect an ext2 rootfs.)
+#
+# Manual boot for a single run (0x1000000 is the stock loadaddr and MUST NOT
+# be changed to the kernel's load address 0x3000000: u-boot would then take
+# the "XIP" path, not copy the payload and jump into the uImage header):
+#
+#   fatload mmc 0:1 0x1000000 uimage-p1025twr.bin
+#   fatload mmc 0:1 0x0c000000 uimage-p1025twr_32b.dtb
+#   bootm 0x1000000 - 0x0c000000
+define Device/freescale_twr-p1025
+  DEVICE_VENDOR := Freescale
+  DEVICE_MODEL := TWR-P1025
+  DEVICE_DTS := twr-p1025
+  SUPPORTED_DEVICES := fsl,TWR-P1025
+  # e2fsprogs/mkf2fs create the rootfs_data overlay in the free space of the
+  # rootfs partition, the vfat modules are needed to write the kernel back to
+  # the FAT boot partition during sysupgrade
+  DEVICE_PACKAGES := e2fsprogs mkf2fs kmod-fs-vfat kmod-nls-cp437 kmod-nls-iso8859-1
+  KERNEL := kernel-bin | uImage none
+  KERNEL_INITRAMFS := kernel-bin | uImage none
+  KERNEL_NAME := zImage.la3000000
+  KERNEL_LOADADDR := 0x3000000
+  KERNEL_ENTRY := 0x3000000
+  KERNEL_INSTALL := 1
+  IMAGES := sdcard.img.gz sysupgrade.bin
+  IMAGE/sdcard.img.gz := sdcard-img uimage-p1025twr.bin uimage-p1025twr_32b.dtb | gzip
+  IMAGE/sysupgrade.bin := sysupgrade-tar dtb=$$(KDIR)/image-$$(DEVICE_DTS).dtb | append-metadata
+endef
+TARGET_DEVICES += freescale_twr-p1025
+
 define Device/hpe_msm460
   DEVICE_VENDOR := Hewlett-Packard
   DEVICE_MODEL := MSM460
