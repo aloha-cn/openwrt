@@ -299,6 +299,7 @@ menu "Target Images"
 	config TARGET_ROOTFS_PARTSIZE
 		int "Root filesystem partition size (in MiB)"
 		depends on USES_ROOTFS_PART || TARGET_ROOTFS_EXT4FS
+		default 512 if TARGET_mpc85xx_p1020
 		default 104
 		help
 		  Select the root filesystem partition size.

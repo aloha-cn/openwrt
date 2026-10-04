@@ -20,6 +20,9 @@ enterasys,ws-ap3710i)
 	ucidef_set_interface_lan "eth0"
 	ucidef_set_label_macaddr "$(mtd_get_mac_ascii cfg1 ethaddr)"
 	;;
+fsl,TWR-P1025)
+	ucidef_set_interfaces_lan_wan "eth0" "eth1"
+	;;
 hpe,msm460)
 	ucidef_set_interface_lan "eth0"
 	;;	
