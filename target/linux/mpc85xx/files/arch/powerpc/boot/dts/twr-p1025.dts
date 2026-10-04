@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR BSD-3-Clause
+/*
+ * Freescale TWR-P1025
+ *
+ * Thin wrapper around the upstream board description. Everything (memory
+ * size, serial port clock, MAC addresses) is filled in by the bootloader,
+ * so only the console port is pinned down here: the DUART wired to the
+ * board's console connector is serial@4500 (= ttyS0), which also lets the
+ * kernel bootwrapper print its early messages.
+ */
+
+/include/ "fsl/p1025twr.dts"
+
+/ {
+	chosen {
+		stdout-path = &serial0;
+	};
+};
