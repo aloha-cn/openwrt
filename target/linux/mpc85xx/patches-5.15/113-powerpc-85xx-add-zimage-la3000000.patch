@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: OpenWrt <openwrt@openwrt.org>
+Date: Fri, 10 Oct 2026 00:00:00 +0000
+Subject: [PATCH] powerpc: add compressed zImage for mpc85xx (la3000000)
+
+Backport of OpenWrt's 010-powerpc-add-compressed-zImage-for-mpc85xx.patch
+(added upstream in 2024, not present in v23.05/5.15): adds a universal
+zImage linked at 0x3000000 which the TWR-P1025 device uses.
+
+Signed-off-by: OpenWrt <openwrt@openwrt.org>
+---
+--- a/arch/powerpc/Kconfig
++++ b/arch/powerpc/Kconfig
+@@ -79,6 +79,10 @@
+ 	depends on SMP && (DEBUGGER || KEXEC_CORE || HARDLOCKUP_DETECTOR)
+ 	default y
+ 
++config PPC_ZIMAGE_LA3000000
++       bool "Build a zImage linked at 0x3000000 (mpc85xx)"
++       default n
++
+ config PPC_WATCHDOG
+ 	bool
+ 	depends on HARDLOCKUP_DETECTOR
+--- a/arch/powerpc/boot/Makefile
++++ b/arch/powerpc/boot/Makefile
+@@ -159,6 +159,7 @@
+ src-plat-$(CONFIG_AMIGAONE) += cuboot-amigaone.c
+ src-plat-$(CONFIG_PPC_PS3) += ps3-head.S ps3-hvcall.S ps3.c
+ src-plat-$(CONFIG_EPAPR_BOOT) += epapr.c epapr-wrapper.c
++src-plat-$(CONFIG_PPC_ZIMAGE_LA3000000) += fixed-head.S
+ src-plat-$(CONFIG_PPC_PSERIES) += pseries-head.S
+ src-plat-$(CONFIG_PPC_POWERNV) += pseries-head.S
+ src-plat-$(CONFIG_PPC_IBM_CELL_BLADE) += pseries-head.S
+@@ -331,6 +332,7 @@
+ image-$(CONFIG_ASP834x)			+= dtbImage.asp834x-redboot
+ 
+ # Board ports in arch/powerpc/platform/85xx/Kconfig
++image-$(CONFIG_PPC_ZIMAGE_LA3000000)	+= zImage.la3000000
+ image-$(CONFIG_MPC8540_ADS)		+= cuImage.mpc8540ads
+ image-$(CONFIG_MPC8560_ADS)		+= cuImage.mpc8560ads
+ image-$(CONFIG_MPC85xx_CDS)		+= cuImage.mpc8541cds \
+--- a/arch/powerpc/boot/wrapper
++++ b/arch/powerpc/boot/wrapper
+@@ -239,6 +239,11 @@
+ fi
+ 
+ case "$platform" in
++la3000000)
++    binary=y
++    platformo="$object/fixed-head.o $object/of.o $object/epapr.o"
++    link_address='0x3000000'
++    ;;
+ of)
+     platformo="$object/of.o $object/epapr.o"
+     make_space=n
